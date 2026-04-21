@@ -23,3 +23,16 @@ class LabItem(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ItemIssue(models.Model):
+    item = models.ForeignKey(LabItem, on_delete=models.CASCADE, related_name="issues")
+    student_name = models.CharField(max_length=120)
+    taken_at = models.DateTimeField(auto_now_add=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-taken_at"]
+
+    def __str__(self):
+        return f"{self.item.name} - {self.student_name}"

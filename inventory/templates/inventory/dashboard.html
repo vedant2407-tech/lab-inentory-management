@@ -36,6 +36,7 @@
                 <th>Category</th>
                 <th>Stock</th>
                 <th>Status</th>
+                <th>Issue Info</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -57,13 +58,77 @@
                     {% endif %}
                 </td>
                 <td>
+                    {% with latest_issue=item.issues.first %}
+                        {% if latest_issue %}
+                            <div class="small">
+                                <div><strong>Student:</strong> {{ latest_issue.student_name }}</div>
+                                <div><strong>Taken:</strong> {{ latest_issue.taken_at|date:"Y-m-d H:i" }}</div>
+                                {% if latest_issue.returned_at %}
+                                    <div><strong>Returned:</strong> {{ latest_issue.returned_at|date:"Y-m-d H:i" }}</div>
+                                {% else %}
+                                    <div class="text-danger"><strong>Returned:</strong> Pending</div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">No issue history</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                <td>
                     <a href="{% url 'update-item' item.id %}" class="btn btn-sm btn-info">Edit</a>
                     <a href="{% url 'delete-item' item.id %}" class="btn btn-sm btn-danger">Delete</a>
+
+                    {% with latest_issue=item.issues.first %}
+                        {% if latest_issue and not latest_issue.returned_at %}
+                            <form method="post" action="{% url 'return-item' latest_issue.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">Mark Returned</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{% url 'issue-item' item.id %}" class="d-inline-flex gap-1 mt-1">
+                                {% csrf_token %}
+                                <input type="text" name="student_name" class="form-control form-control-sm" placeholder="Student name" required>
+                                <button type="submit" class="btn btn-sm btn-primary">Issue</button>
+                            </form>
+                        {% endif %}
+                    {% endwith %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" class="text-center">No components added yet.</td>
+                <td colspan="6" class="text-center">No components added yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h5 class="mt-4">Recent Issue/Return History</h5>
+    <table class="table table-sm bg-white">
+        <thead class="table-light">
+            <tr>
+                <th>Component</th>
+                <th>Student</th>
+                <th>Taken At</th>
+                <th>Returned At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in recent_issues %}
+            <tr>
+                <td>{{ entry.item.name }}</td>
+                <td>{{ entry.student_name }}</td>
+                <td>{{ entry.taken_at|date:"Y-m-d H:i" }}</td>
+                <td>
+                    {% if entry.returned_at %}
+                        {{ entry.returned_at|date:"Y-m-d H:i" }}
+                    {% else %}
+                        <span class="text-danger">Pending</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No issue records yet.</td>
             </tr>
             {% endfor %}
         </tbody>
